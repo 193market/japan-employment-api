@@ -151,3 +151,12 @@ async def self_employed(limit: int = Query(default=10, ge=1, le=60)):
     """Self-employed workers as % of total employment"""
     data = await fetch_wb("SL.EMP.SELF.ZS", limit)
     return {"indicator": "Self-Employed Workers", "series_id": "SL.EMP.SELF.ZS", "unit": "% of Total Employment", "frequency": "Annual", "country": "Japan", "source": "World Bank", "updated_at": datetime.utcnow().isoformat() + "Z", "data": data}
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    if request.url.path == "/":
+        return await call_next(request)
+    key = request.headers.get("X-RapidAPI-Key", "")
+    if not key:
+        return JSONResponse(status_code=401, content={"detail": "Missing X-RapidAPI-Key header"})
+    return await call_next(request)
